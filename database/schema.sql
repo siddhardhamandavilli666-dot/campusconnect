@@ -1,0 +1,89 @@
+CREATE DATABASE IF NOT EXISTS campusconnect;
+USE campusconnect;
+
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(150) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  role ENUM('student','vendor') NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS service_requests (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  student_id INT NOT NULL,
+  service_type VARCHAR(100) NOT NULL,
+  title VARCHAR(150) NOT NULL,
+  description TEXT NOT NULL,
+  location VARCHAR(200) NOT NULL,
+  budget DECIMAL(10,2) DEFAULT 0,
+  copies INT NULL,
+  print_type VARCHAR(30) NULL,
+  paper_size VARCHAR(20) NULL,
+  sides VARCHAR(30) NULL,
+  device_type VARCHAR(100) NULL,
+  pickup_location VARCHAR(200) NULL,
+  drop_location VARCHAR(200) NULL,
+  travel_date DATE NULL,
+  travel_time TIME NULL,
+  people_count INT NULL,
+  special_requirements TEXT NULL,
+  status ENUM('OPEN','QUOTED','ACCEPTED','COMPLETED','CANCELLED') DEFAULT 'OPEN',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS request_attachments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  request_id INT NOT NULL,
+  file_name VARCHAR(255) NOT NULL,
+  file_url VARCHAR(500) NOT NULL,
+  mime_type VARCHAR(100) NOT NULL,
+  file_size INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (request_id) REFERENCES service_requests(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS quotations (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  request_id INT NOT NULL,
+  vendor_id INT NOT NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  message VARCHAR(500),
+  status ENUM('PENDING','ACCEPTED','REJECTED') DEFAULT 'PENDING',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (request_id) REFERENCES service_requests(id) ON DELETE CASCADE,
+  FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS orders (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  request_id INT NOT NULL,
+  quotation_id INT NOT NULL,
+  student_id INT NOT NULL,
+  vendor_id INT NOT NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  payment_status ENUM('PENDING','PAID','FAILED') NOT NULL DEFAULT 'PENDING',
+  razorpay_order_id VARCHAR(100) NULL,
+  razorpay_payment_id VARCHAR(100) NULL,
+  status ENUM('PLACED','IN_PROGRESS','COMPLETED','CANCELLED') DEFAULT 'PLACED',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (request_id) REFERENCES service_requests(id) ON DELETE CASCADE,
+  FOREIGN KEY (quotation_id) REFERENCES quotations(id) ON DELETE CASCADE,
+  FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS reviews (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  order_id INT NOT NULL UNIQUE,
+  student_id INT NOT NULL,
+  vendor_id INT NOT NULL,
+  rating INT NOT NULL,
+  comment VARCHAR(500),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+  FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE CASCADE
+);
