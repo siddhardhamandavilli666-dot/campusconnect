@@ -8,9 +8,9 @@ import {
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./styles.css";
 
-export const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-
-export const FILE_BASE_URL = import.meta.env.VITE_FILE_BASE_URL || API.replace(/\/api$/, "");
+const rawApiUrl = (import.meta.env.VITE_API_URL || "http://localhost:5000/api").trim().replace(/\/+$/, "");
+export const API = rawApiUrl.endsWith("/api") ? rawApiUrl : `${rawApiUrl}/api`;
+export const FILE_BASE_URL = (import.meta.env.VITE_FILE_BASE_URL || API.replace(/\/api$/, "")).trim().replace(/\/+$/, "");
 
 export function loadRazorpayScript() {
   return new Promise((resolve) => {
